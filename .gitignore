@@ -1,0 +1,4 @@
+1-federated_learning/data
+2-quantization/data
+MNIST
+1-federated_learning/data/*.tar.gz
