@@ -1,6 +1,5 @@
 
 
-
 # Task 1:
 # 1.1
 import torch
@@ -21,7 +20,7 @@ print("Float Tensor has type:", d3_tensor.dtype, "and device:", d3_tensor.device
 second_dim_elems = d3_tensor.reshape(12, 2)
 print(second_dim_elems)
 
-# format is [start:end:step], if we dont pass start its 0, if we dont pass end ist length of array
+# format is [starta:end:step], if we dont pass start its 0, if we dont pass end ist length of array
 snd_elem = d3_tensor.reshape(24)[::2]
 print(snd_elem)
 
