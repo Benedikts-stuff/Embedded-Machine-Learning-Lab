@@ -59,7 +59,7 @@ if __name__ == "__main__":
     device = get_device()
 
     default_net = TinyYoloV2(num_classes=20).to(device)
-    default_net.load_state_dict(torch.load("../voc_pretrained.pt", map_location=device, weights_only=False))
+    default_net.load_state_dict(torch.load("./StateDicts/voc_pretrained.pt", map_location=device, weights_only=False))
 
     fused_net_multi_class = TinyYoloV2Fused(num_classes=20).to(device)
     fused_net_multi_class.load_state_dict(get_fused_sd(default_net))
