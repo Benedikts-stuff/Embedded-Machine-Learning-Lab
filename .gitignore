@@ -3,6 +3,7 @@
 MNIST
 1-federated_learning/data/*.tar.gz
 data/*
+StateDicts/*
 
 
 # Byte-compiled / optimized / DLL files
