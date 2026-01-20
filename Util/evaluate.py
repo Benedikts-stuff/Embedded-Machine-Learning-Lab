@@ -1,10 +1,13 @@
 import time 
 import torch
+import os
 from Util.ap import precision_recall_levels, ap
 from Util.yolo import nms, filter_boxes
 import tqdm
 from Util.dataloader import VOCDataLoader
 from Util.dataloader import VOCDataLoaderPerson
+import numpy as np
+import pandas as pd
 
 def run_comparison_benchmark(models, device, num_samples=500):
     loader = VOCDataLoader(train=False, batch_size=1)
@@ -106,3 +109,40 @@ def evaluate_model_accuracy(model, test_loader, device,  num_samples=500):
             if idx + 1 == num_samples:
                 break
     return ap(test_precision, test_recall)
+
+
+def count_parameters(model, path):
+    size_bytes = os.path.getsize(path)
+    return size_bytes / (1024 * 1024), sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+
+def run_pareto_analysis(study_results, baseline_ap):
+    summary = []
+
+    for name, df in study_results.items():
+        peak_ap = df['ap'].max()
+        delta_to_baseline = peak_ap - baseline_ap
+        stability = df['ap'].tail(5).std()
+        threshold = peak_ap * 0.95
+        convergence_epoch = df[df['ap'] >= threshold]['epoch'].iloc[0]
+        
+        score = peak_ap - (stability * 2) 
+
+        summary.append({
+            "Scenario": name,
+            "Peak AP": peak_ap,
+            "Delta to Baseline": f"{delta_to_baseline:+.4f}",
+            "Stability (std)": stability,
+            "95% Conv. Epoch": convergence_epoch,
+            "Score": score
+        })
+
+    pareto_df = pd.DataFrame(summary).sort_values(by="Score", ascending=False)
+    
+    print(f"\n--- PARETO OPTIMALITY ANALYSIS - (Baseline AP: {baseline_ap:.4f}) ---")
+    print(pareto_df.to_string(index=False))
+    
+    best_scenario = pareto_df.iloc[0]['Scenario']
+    print(f"\nRecommendation: Use '{best_scenario}' for Pruning.")
+    return pareto_df

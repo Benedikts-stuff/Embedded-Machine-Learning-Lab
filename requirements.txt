@@ -69,4 +69,5 @@ triton==3.5.1
 typing_extensions==4.15.0
 tzdata==2025.3
 wcwidth==0.2.14
+albumentations
 

@@ -76,3 +76,56 @@ def plot_person_only_training_history(history):
     
     plt.savefig('./Plots/training_history_person_only.png')
     plt.show()
+
+
+def plot_ablation_comparison(results):
+    plt.figure(figsize=(12, 7))
+    
+    for name, df in results.items():
+        plt.plot(df['epoch'], df['ap'], label=f"{name} (Best: {df['ap'].max():.4f})", linewidth=2)
+    
+    plt.axhline(y=0.67, color='red', linestyle='--', label='Baseline Multi-Class (0.67)')
+    plt.title('Ablation Study: Tuning Depth vs. Average Precision')
+    plt.xlabel('Epoch')
+    plt.ylabel('Average Precision (AP)')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("./Plots/ablation_study_comparison.png")
+    plt.show()
+
+
+
+def plot_pareto_frontier(pareto_df, baseline_ap=0.67):
+    plt.figure(figsize=(12, 7))
+    
+    plt.axhline(y=baseline_ap, color='gray', linestyle='--', linewidth=1.5, label=f'Baseline AP ({baseline_ap:.2f})')
+    
+    for i, row in pareto_df.iterrows():
+        color = 'forestgreen' if row['Peak AP'] >= baseline_ap else 'crimson'
+        
+        scatter = plt.scatter(row['95% Conv. Epoch'], row['Peak AP'], 
+                            s=1500 * (1 - row['Stability (std)'] * 10), 
+                            color=color,
+                            label=row['Scenario'], 
+                            alpha=0.6,
+                            edgecolors='black')
+        
+        plt.text(row['95% Conv. Epoch'] + 0.1, row['Peak AP'] + 0.002, 
+                 f"{row['Scenario']}\n(AP: {row['Peak AP']:.3f})", 
+                 fontsize=9, fontweight='bold', va='bottom')
+
+    plt.xlabel('Konvergenz-Geschwindigkeit (Epoche bis 95% des Peaks)', fontsize=11)
+    plt.ylabel('Maximale Average Precision ($AP$)', fontsize=11)
+    plt.title('Pareto-Analyse: Performance vs. Stabilität vs. Speed', fontsize=14, pad=20)
+    
+    plt.annotate('Sweet Spot: Schnell & Präzise', xy=(pareto_df['95% Conv. Epoch'].min(), pareto_df['Peak AP'].max()),
+                 xytext=(pareto_df['95% Conv. Epoch'].min() + 1, pareto_df['Peak AP'].max() + 0.01),
+                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
+
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.legend(loc='lower right', frameon=True, shadow=True)
+    
+    plt.tight_layout()
+    plt.savefig('./Plots/pareto_frontier_analysis.png', dpi=300)
+    plt.show()
