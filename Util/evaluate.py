@@ -1,6 +1,7 @@
 import time 
 import torch
 import os
+from torchinfo import summary
 from Util.ap import precision_recall_levels, ap
 from Util.yolo import nms, filter_boxes
 import tqdm
@@ -48,16 +49,15 @@ def run_comparison_benchmark_person(models, device, num_samples=500):
     return stats
 
 
-def evaluate_person_accuracy(model, num_classes_model, device, num_samples=500):
+def evaluate_person_accuracy(model, num_classes_model, device, test_loader, num_samples=500):
     model.eval()
     test_precision = []
     test_recall = []
-    test_loader = VOCDataLoaderPerson(train=False, batch_size=1)
 
     PERSON_CLASS_ID = 14 if num_classes_model == 20 else 0 
 
 
-    print(f"Evaluate{'Original tinyyolo' if num_classes_model==20 else 'Fine-Tuned'} on Person Only testset...")
+    print(f"Evaluate {'Original tinyyolo' if num_classes_model==20 else 'Fine-Tuned'} on Person Only testset...")
     with torch.no_grad():
         for idx, (input, target) in tqdm.tqdm(enumerate(test_loader), total=num_samples):
             input, target = input.to(device), target.to(device)
@@ -146,3 +146,12 @@ def run_pareto_analysis(study_results, baseline_ap):
     best_scenario = pareto_df.iloc[0]['Scenario']
     print(f"\nRecommendation: Use '{best_scenario}' for Pruning.")
     return pareto_df
+
+
+
+def get_model_complexity(model, input_res=320):
+    stats = summary(model, input_size=(1, 3, input_res, input_res), verbose=0)
+    macs = stats.total_mult_adds
+    flops = 2 * macs
+    
+    return flops / 1e6, macs

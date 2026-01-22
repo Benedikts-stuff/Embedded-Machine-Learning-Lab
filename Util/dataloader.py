@@ -42,13 +42,14 @@ def num_to_class(number):
     return 'none'
 
 class VOCTransform:
-    def __init__(self, train=True, only_person=False):
+    def __init__(self, train=True, only_person=False, is_baseline=False):
         self.only_person = only_person
         self.train = train
+        self.is_baseline = is_baseline
         if train:
-            self.augmentation = PersonAugmentation(is_train=True)
+            self.augmentation = PersonAugmentation(is_train=True, is_baseline=False)
         else:
-            self.augmentation = PersonAugmentation(is_train=False)
+            self.augmentation = PersonAugmentation(is_train=False, is_baseline=is_baseline)
 
     def __call__(self, image, target):
         num_bboxes = 10
@@ -86,6 +87,9 @@ class VOCTransform:
         aug_bboxes = augmented['bboxes']
         aug_labels = augmented['class_labels']
 
+        if self.is_baseline and image_tensor.max() > 1.0:
+            image_tensor = image_tensor.float() / 255.0
+
         target_vectors = []
         for bbox, lbl in zip(aug_bboxes, aug_labels):
             xmin, ymin, xmax, ymax = bbox
@@ -122,29 +126,23 @@ class VOCTransform:
         return image_tensor, target_vectors
 
 
-def VOCDataLoader(train=True, batch_size=32, shuffle=False):
-    if train:
-        image_set = "train"
-    else:
-        image_set = "val"
-
-    if not os.path.exists("data/VOCdevkit/VOC2012/JPEGImages/2007_000027.jpg"):
-        return torch.utils.data.DataLoader(torchvision.datasets.VOCDetection("data/", year="2012", image_set=image_set, download=True), batch_size=batch_size, shuffle=shuffle)
-
-    dataset = torchvision.datasets.VOCDetection("data/", year="2012", image_set=image_set, download=False, transforms=VOCTransform(train=train))
+def VOCDataLoader(train=True, batch_size=32, shuffle=False, is_baseline=False):
+    image_set = "train" if train else "val"
+    
+    dataset = torchvision.datasets.VOCDetection(
+        "data/", year="2012", image_set=image_set, download=False, 
+        transforms=VOCTransform(train=train, is_baseline=is_baseline)
+    )
     return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
         
-def VOCDataLoaderPerson(train=True, batch_size=32, shuffle=False):
-    if train:
-        image_set = "train"
-    else:
-        image_set = "val"
-
-    if not os.path.exists("data/VOCdevkit/VOC2012/JPEGImages/2007_000027.jpg"):
-        dataset = torchvision.datasets.VOCDetection("data/", year="2012", image_set=image_set, download=True)
-        
-    dataset = torchvision.datasets.VOCDetection("data/", year="2012", image_set=image_set, download=False,
-                                transforms=VOCTransform(train=train, only_person=True))
-    with open("data/person_indices.json", "r") as fd: indices = list(json.load(fd)[image_set])
+def VOCDataLoaderPerson(train=True, batch_size=32, shuffle=False, is_baseline=False):
+    image_set = "train" if train else "val"
+    
+    dataset = torchvision.datasets.VOCDetection(
+        "data/", year="2012", image_set=image_set, download=False,
+        transforms=VOCTransform(train=train, only_person=True, is_baseline=is_baseline)
+    )
+    with open("data/person_indices.json", "r") as fd: 
+        indices = list(json.load(fd)[image_set])
     dataset = torch.utils.data.Subset(dataset, indices)
     return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)

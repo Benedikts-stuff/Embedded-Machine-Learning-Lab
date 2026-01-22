@@ -2,14 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class TinyYoloV2Fused(nn.Module):
+class TinyYoloV2FusedDynamic(nn.Module):
     def __init__(self, num_classes=1, channels=None):
         super().__init__()
 
         if channels is None:
             channels = [16, 32, 64, 128, 256, 512, 1024, 1024]
-            
+        
+        self.pad = nn.ReflectionPad2d((0, 1, 0, 1))
         self.num_classes = num_classes
+        self.channels = channels
 
         anchors = ((1.08, 1.19),
                    (3.42, 4.41),

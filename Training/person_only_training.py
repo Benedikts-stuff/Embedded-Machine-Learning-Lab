@@ -19,6 +19,7 @@ def get_person_only_sd_experimental(num_epochs, eval_samples, model, device, cri
     history = {"epoch": [], "loss": [], "ap": [], "lr_backbone": [], "lr_head": []}
 
     train_loader = VOCDataLoaderPerson(train=True, batch_size=64, shuffle=True)
+    val_loader = VOCDataLoaderPerson(train=False, batch_size=1, is_baseline=False, shuffle=True)
 
     if unfreeze_epoch > 0:
         for name, param in model.named_parameters():
@@ -70,9 +71,9 @@ def get_person_only_sd_experimental(num_epochs, eval_samples, model, device, cri
             print("!!! Loss explodedto NaN so we break this scenario")
             break
 
-        current_ap = evaluate_person_accuracy(model, 1, device, eval_samples)
+        current_ap = evaluate_person_accuracy(model, 1, device, val_loader ,eval_samples)
 
-        history["epoch"].append(epoch + 1)
+        history["epoch"].append(global_epoch)
         history["loss"].append(avg_loss)
         history["ap"].append(current_ap)
         
