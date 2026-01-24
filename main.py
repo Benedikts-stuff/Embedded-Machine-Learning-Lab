@@ -43,7 +43,7 @@ def set_seed(seed=42):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    print(f"Seed {seed} set - Results are now reproducible.")
+    print(f"Seed {seed} set")
 
 def get_device():
     device = ''
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     )   
 
 
-    #--------------Prune the Person Only fine tunes net-----------------------------------------------------------------------------
+    #--------------Prune the Person Only fine tunes net and Quantize-----------------------------------------------------------------------------
     train_loader = VOCDataLoaderPerson(train=True, batch_size=32, shuffle=True, is_baseline=False)
     pruning_results = run_pruning_study('./Plots/pruning_comparison.png', device, criterion, loader_new, train_loader) # resuls is DataFrame
     csv_path = f"./Logs/history_pruning.csv"
@@ -365,7 +365,6 @@ if __name__ == "__main__":
     ap_finetuned = best_row['ap']
     inf_time_finetuned = best_row['inf_time']
 
-    #--------------Quantization-----------------------------------------------------------------------------------------------------
     device_quantized = 'cpu'
     percent_steps = [10, 20, 30, 40, 50, 60, 70, 80]
     sweep_data = []
